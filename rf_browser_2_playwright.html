@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Library to Playwright Migration Guide</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .category-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .code-block {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        .highlight {
+            background-color: #fef08a;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <header class="bg-gradient-to-r from-blue-800 to-purple-800 py-8 px-4 shadow-lg">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-3xl md:text-4xl font-bold text-center mb-2">🤖 Robot Framework Browser Library → 🎭 Playwright Python</h1>
+            <p class="text-center text-blue-200 text-lg">Complete Migration Reference Guide</p>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Search and Filter Section -->
+        <div class="bg-gray-800 rounded-xl p-6 mb-6 shadow-lg">
+            <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <div class="flex-1">
+                    <input type="text" id="searchInput" placeholder="Search keywords..." 
+                        class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none text-white placeholder-gray-400">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="expandAll()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition">Expand All</button>
+                    <button onclick="collapseAll()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">Collapse All</button>
+                </div>
+            </div>
+            
+            <!-- Category Filters -->
+            <div class="flex flex-wrap gap-2" id="categoryFilters">
+                <button class="category-btn active px-3 py-1.5 rounded-full bg-gray-700 hover:bg-blue-600 transition text-sm" data-category="all">All</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-blue-400" id="totalKeywords">0</div>
+                <div class="text-gray-400 text-sm">Total Keywords</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-green-400" id="totalCategories">0</div>
+                <div class="text-gray-400 text-sm">Categories</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-purple-400" id="visibleKeywords">0</div>
+                <div class="text-gray-400 text-sm">Showing</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-yellow-400" id="matchPercentage">100%</div>
+                <div class="text-gray-400 text-sm">Coverage</div>
+            </div>
+        </div>
+
+        <!-- Keywords Container -->
+        <div id="keywordsContainer" class="space-y-4"></div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button id="backToTop" onclick="scrollToTop()" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 p-3 rounded-full shadow-lg hidden transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+        </svg>
+    </button>
+
+    <footer class="bg-gray-800 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-gray-400">
+            <p>Browser Library Keywords mapped to Playwright Python equivalents</p>
+            <p class="text-sm mt-2">Tip: Use Ctrl+F or the search box to find specific keywords</p>
+        </div>
+    </footer>
+
+    <script>
+        const keywordsData = [
+            // Browser & Context Management
+            {
+                category: "Browser Management",
+                keywords: [
+                    {
+                        browser: "New Browser",
+                        browserSyntax: "New Browser    browser=chromium    headless=True",
+                        playwright: "playwright.chromium.launch()",
+                        playwrightSyntax: "browser = playwright.chromium.launch(headless=True)",
+                        description: "Launches a new browser instance",
+                        notes: "Playwright supports chromium, firefox, webkit"
+                    },
+                    {
+                        browser: "Close Browser",
+                        browserSyntax: "Close Browser    ALL",
+                        playwright: "browser.close()",
+                        playwrightSyntax: "await browser.close()",
+                        description: "Closes the browser instance",
+                        notes: "Use 'ALL' in RF to close all browsers"
+                    },
+                    {
+                        browser: "New Context",
+                        browserSyntax: "New Context    viewport={'width': 1920, 'height': 1080}",
+                        playwright: "browser.new_context()",
+                        playwrightSyntax: "context = await browser.new_context(viewport={'width': 1920, 'height': 1080})",
+                        description: "Creates a new browser context (isolated session)",
+                        notes: "Contexts are isolated - cookies, storage not shared"
+                    },
+                    {
+                        browser: "Close Context",
+                        browserSyntax: "Close Context    CURRENT",
+                        playwright: "context.close()",
+                        playwrightSyntax: "await context.close()",
+                        description: "Closes the browser context",
+                        notes: ""
+                    },
+                    {
+                        browser: "New Page",
+                        browserSyntax: "New Page    url=https://example.com",
+                        playwright: "context.new_page()",
+                        playwrightSyntax: "page = await context.new_page()\nawait page.goto('https://example.com')",
+                        description: "Opens a new page/tab",
+                        notes: "In Playwright, goto is separate from new_page"
+                    },
+                    {
+                        browser: "Close Page",
+                        browserSyntax: "Close Page    CURRENT",
+                        playwright: "page.close()",
+                        playwrightSyntax: "await page.close()",
+                        description: "Closes the current page",
+                        notes: ""
+                    },
+                    {
+                        browser: "Switch Browser",
+                        browserSyntax: "Switch Browser    browser_id",
+                        playwright: "# Use browser variable reference",
+                        playwrightSyntax: "# Store browser references and switch manually\nbrowser1 = playwright.chromium.launch()\nbrowser2 = playwright.firefox.launch()",
+                        description: "Switches between browser instances",
+                        notes: "In Playwright, manage multiple browser references directly"
+                    },
+                    {
+                        browser: "Switch Context",
+                        browserSyntax: "Switch Context    context_id",
+                        playwright: "# Use context variable reference",
+                        playwrightSyntax: "context1 = await browser.new_context()\ncontext2 = await browser.new_context()",
+                        description: "Switches between contexts",
+                        notes: "Manage context references directly"
+                    },
+                    {
+                        browser: "Switch Page",
+                        browserSyntax: "Switch Page    NEW",
+                        playwright: "# Use page reference or context.pages",
+                        playwrightSyntax: "pages = context.pages\npage = pages[-1]  # Get newest page",
+                        description: "Switches between pages",
+                        notes: "Access pages via context.pages list"
+                    },
+                    {
+                        browser: "Get Browser Catalog",
+                        browserSyntax: "${catalog}=    Get Browser Catalog",
+                        playwright: "# No direct equivalent",
+                        playwrightSyntax: "# Track browsers manually or use:\ncontexts = browser.contexts\npages = context.pages",
+                        description: "Gets information about all browsers, contexts, pages",
+                        notes: "Playwright requires manual tracking"
+                    }
+                ]
+            },
+            // Navigation
+            {
+                category: "Navigation",
+                keywords: [
+                    {
+                        browser: "Go To",
+                        browserSyntax: "Go To    https://example.com",
+                        playwright: "page.goto()",
+                        playwrightSyntax: "await page.goto('https://example.com')",
+                        description: "Navigates to a URL",
+                        notes: "Returns response object in Playwright"
+                    },
+                    {
+                        browser: "Go Back",
+                        browserSyntax: "Go Back",
+                        playwright: "page.go_back()",
+                        playwrightSyntax: "await page.go_back()",
+                        description: "Navigates back in history",
+                        notes: ""
+                    },
+                    {
+                        browser: "Go Forward",
+                        browserSyntax: "Go Forward",
+                        playwright: "page.go_forward()",
+                        playwrightSyntax: "await page.go_forward()",
+                        description: "Navigates forward in history",
+                        notes: ""
+                    },
+                    {
+                        browser: "Reload",
+                        browserSyntax: "Reload",
+                        playwright: "page.reload()",
+                        playwrightSyntax: "await page.reload()",
+                        description: "Reloads the current page",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Url",
+                        browserSyntax: "${url}=    Get Url",
+                        playwright: "page.url",
+                        playwrightSyntax: "url = page.url",
+                        description: "Gets current page URL",
+                        notes: "Property, not method in Playwright"
+                    },
+                    {
+                        browser: "Get Title",
+                        browserSyntax: "${title}=    Get Title",
+                        playwright: "page.title()",
+                        playwrightSyntax: "title = await page.title()",
+                        description: "Gets page title",
+                        notes: ""
+                    }
+                ]
+            },
+            // Element Interaction
+            {
+                category: "Element Interaction",
+                keywords: [
+                    {
+                        browser: "Click",
+                        browserSyntax: "Click    selector",
+                        playwright: "page.click() / locator.click()",
+                        playwrightSyntax: "await page.click('selector')\n# or\nawait page.locator('selector').click()",
+                        description: "Clicks an element",
+                        notes: "Locator API is preferred in Playwright"
+                    },
+                    {
+                        browser: "Double Click",
+                        browserSyntax: "Double Click    selector",
+                        playwright: "page.dblclick() / locator.dblclick()",
+                        playwrightSyntax: "await page.dblclick('selector')\n# or\nawait page.locator('selector').dblclick()",
+                        description: "Double-clicks an element",
+                        notes: ""
+                    },
+                    {
+                        browser: "Right Click",
+                        browserSyntax: "Right Click    selector",
+                        playwright: "click with button='right'",
+                        playwrightSyntax: "await page.click('selector', button='right')\n# or\nawait page.locator('selector').click(button='right')",
+                        description: "Right-clicks an element",
+                        notes: "Use button parameter"
+                    },
+                    {
+                        browser: "Fill Text",
+                        browserSyntax: "Fill Text    selector    text",
+                        playwright: "page.fill() / locator.fill()",
+                        playwrightSyntax: "await page.fill('selector', 'text')\n# or\nawait page.locator('selector').fill('text')",
+                        description: "Fills a text input",
+                        notes: "Clears existing content first"
+                    },
+                    {
+                        browser: "Type Text",
+                        browserSyntax: "Type Text    selector    text    delay=50ms",
+                        playwright: "page.type() / locator.type()",
+                        playwrightSyntax: "await page.type('selector', 'text', delay=50)\n# or\nawait page.locator('selector').type('text', delay=50)",
+                        description: "Types text character by character",
+                        notes: "delay is in milliseconds"
+                    },
+                    {
+                        browser: "Clear Text",
+                        browserSyntax: "Clear Text    selector",
+                        playwright: "locator.clear()",
+                        playwrightSyntax: "await page.locator('selector').clear()\n# or\nawait page.fill('selector', '')",
+                        description: "Clears input field",
+                        notes: ""
+                    },
+                    {
+                        browser: "Press Keys",
+                        browserSyntax: "Press Keys    selector    Enter",
+                        playwright: "page.press() / locator.press()",
+                        playwrightSyntax: "await page.press('selector', 'Enter')\n# or\nawait page.locator('selector').press('Enter')",
+                        description: "Presses keyboard keys",
+                        notes: "Supports key combinations like 'Control+A'"
+                    },
+                    {
+                        browser: "Keyboard Key",
+                        browserSyntax: "Keyboard Key    press    Enter",
+                        playwright: "page.keyboard.press()",
+                        playwrightSyntax: "await page.keyboard.press('Enter')\nawait page.keyboard.down('Shift')\nawait page.keyboard.up('Shift')",
+                        description: "Low-level keyboard operations",
+                        notes: "press, down, up actions available"
+                    },
+                    {
+                        browser: "Keyboard Input",
+                        browserSyntax: "Keyboard Input    type    Hello World",
+                        playwright: "page.keyboard.type()",
+                        playwrightSyntax: "await page.keyboard.type('Hello World')",
+                        description: "Types text via keyboard",
+                        notes: ""
+                    },
+                    {
+                        browser: "Hover",
+                        browserSyntax: "Hover    selector",
+                        playwright: "page.hover() / locator.hover()",
+                        playwrightSyntax: "await page.hover('selector')\n# or\nawait page.locator('selector').hover()",
+                        description: "Hovers over an element",
+                        notes: ""
+                    },
+                    {
+                        browser: "Focus",
+                        browserSyntax: "Focus    selector",
+                        playwright: "page.focus() / locator.focus()",
+                        playwrightSyntax: "await page.focus('selector')\n# or\nawait page.locator('selector').focus()",
+                        description: "Focuses an element",
+                        notes: ""
+                    },
+                    {
+                        browser: "Scroll To Element",
+                        browserSyntax: "Scroll To Element    selector",
+                        playwright: "locator.scroll_into_view_if_needed()",
+                        playwrightSyntax: "await page.locator('selector').scroll_into_view_if_needed()",
+                        description: "Scrolls element into view",
+                        notes: ""
+                    },
+                    {
+                        browser: "Scroll By",
+                        browserSyntax: "Scroll By    vertical=100",
+                        playwright: "page.mouse.wheel()",
+                        playwrightSyntax: "await page.mouse.wheel(0, 100)  # deltaX, deltaY",
+                        description: "Scrolls by specified amount",
+                        notes: ""
+                    },
+                    {
+                        browser: "Drag And Drop",
+                        browserSyntax: "Drag And Drop    source    target",
+                        playwright: "page.drag_and_drop()",
+                        playwrightSyntax: "await page.drag_and_drop('source', 'target')",
+                        description: "Drags element to target",
+                        notes: ""
+                    },
+                    {
+                        browser: "Upload File By Selector",
+                        browserSyntax: "Upload File By Selector    selector    /path/to/file",
+                        playwright: "locator.set_input_files()",
+                        playwrightSyntax: "await page.locator('input[type=\"file\"]').set_input_files('/path/to/file')\n# Multiple files:\nawait page.locator('input').set_input_files(['file1.txt', 'file2.txt'])",
+                        description: "Uploads files to input",
+                        notes: "Supports multiple files as list"
+                    },
+                    {
+                        browser: "Check Checkbox",
+                        browserSyntax: "Check Checkbox    selector",
+                        playwright: "locator.check()",
+                        playwrightSyntax: "await page.locator('selector').check()",
+                        description: "Checks a checkbox",
+                        notes: "Only checks if not already checked"
+                    },
+                    {
+                        browser: "Uncheck Checkbox",
+                        browserSyntax: "Uncheck Checkbox    selector",
+                        playwright: "locator.uncheck()",
+                        playwrightSyntax: "await page.locator('selector').uncheck()",
+                        description: "Unchecks a checkbox",
+                        notes: ""
+                    },
+                    {
+                        browser: "Select Options By",
+                        browserSyntax: "Select Options By    selector    value    option_value",
+                        playwright: "locator.select_option()",
+                        playwrightSyntax: "await page.locator('select').select_option('value')\n# By label:\nawait page.locator('select').select_option(label='Option Text')\n# By index:\nawait page.locator('select').select_option(index=2)",
+                        description: "Selects dropdown option",
+                        notes: "Multiple selection methods available"
+                    },
+                    {
+                        browser: "Deselect Options",
+                        browserSyntax: "Deselect Options    selector",
+                        playwright: "locator.select_option([])",
+                        playwrightSyntax: "await page.locator('select').select_option([])",
+                        description: "Deselects all options",
+                        notes: "Pass empty list to deselect"
+                    }
+                ]
+            },
+            // Element State & Properties
+            {
+                category: "Element State & Properties",
+                keywords: [
+                    {
+                        browser: "Get Text",
+                        browserSyntax: "${text}=    Get Text    selector",
+                        playwright: "locator.text_content() / inner_text()",
+                        playwrightSyntax: "text = await page.locator('selector').text_content()\n# or\ntext = await page.locator('selector').inner_text()",
+                        description: "Gets element text content",
+                        notes: "text_content includes hidden text, inner_text doesn't"
+                    },
+                    {
+                        browser: "Get Attribute",
+                        browserSyntax: "${attr}=    Get Attribute    selector    attribute_name",
+                        playwright: "locator.get_attribute()",
+                        playwrightSyntax: "attr = await page.locator('selector').get_attribute('href')",
+                        description: "Gets element attribute value",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Property",
+                        browserSyntax: "${prop}=    Get Property    selector    property_name",
+                        playwright: "locator.evaluate()",
+                        playwrightSyntax: "prop = await page.locator('selector').evaluate('el => el.propertyName')",
+                        description: "Gets element DOM property",
+                        notes: "Use evaluate for properties"
+                    },
+                    {
+                        browser: "Get Classes",
+                        browserSyntax: "${classes}=    Get Classes    selector",
+                        playwright: "locator.get_attribute('class')",
+                        playwrightSyntax: "classes = await page.locator('selector').get_attribute('class')\nclass_list = classes.split() if classes else []",
+                        description: "Gets element classes",
+                        notes: "Parse string to get list"
+                    },
+                    {
+                        browser: "Get Style",
+                        browserSyntax: "${style}=    Get Style    selector    property",
+                        playwright: "locator.evaluate()",
+                        playwrightSyntax: "style = await page.locator('selector').evaluate('el => getComputedStyle(el).color')",
+                        description: "Gets computed style property",
+                        notes: "Use getComputedStyle in evaluate"
+                    },
+                    {
+                        browser: "Get Element Count",
+                        browserSyntax: "${count}=    Get Element Count    selector",
+                        playwright: "locator.count()",
+                        playwrightSyntax: "count = await page.locator('selector').count()",
+                        description: "Counts matching elements",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Elements",
+                        browserSyntax: "${elements}=    Get Elements    selector",
+                        playwright: "locator.all()",
+                        playwrightSyntax: "elements = await page.locator('selector').all()\nfor element in elements:\n    print(await element.text_content())",
+                        description: "Gets all matching elements",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Element State",
+                        browserSyntax: "${state}=    Get Element State    selector    visible",
+                        playwright: "locator.is_visible() etc.",
+                        playwrightSyntax: "is_visible = await page.locator('selector').is_visible()\nis_enabled = await page.locator('selector').is_enabled()\nis_checked = await page.locator('selector').is_checked()",
+                        description: "Gets element state",
+                        notes: "Separate methods for each state"
+                    },
+                    {
+                        browser: "Get Checkbox State",
+                        browserSyntax: "${checked}=    Get Checkbox State    selector",
+                        playwright: "locator.is_checked()",
+                        playwrightSyntax: "is_checked = await page.locator('selector').is_checked()",
+                        description: "Gets checkbox checked state",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Bounding Box",
+                        browserSyntax: "${box}=    Get Bounding Box    selector",
+                        playwright: "locator.bounding_box()",
+                        playwrightSyntax: "box = await page.locator('selector').bounding_box()\n# Returns: {'x': 0, 'y': 0, 'width': 100, 'height': 50}",
+                        description: "Gets element position and size",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Selected Options",
+                        browserSyntax: "${options}=    Get Selected Options    selector",
+                        playwright: "locator.evaluate()",
+                        playwrightSyntax: "options = await page.locator('select').evaluate('''el => {\n    return Array.from(el.selectedOptions).map(o => o.value)\n}''')",
+                        description: "Gets selected dropdown options",
+                        notes: "Use evaluate for this"
+                    },
+                    {
+                        browser: "Get Viewport Size",
+                        browserSyntax: "${size}=    Get Viewport Size",
+                        playwright: "page.viewport_size",
+                        playwrightSyntax: "size = page.viewport_size\n# Returns: {'width': 1280, 'height': 720}",
+                        description: "Gets viewport dimensions",
+                        notes: "Property, not method"
+                    },
+                    {
+                        browser: "Set Viewport Size",
+                        browserSyntax: "Set Viewport Size    width=1920    height=1080",
+                        playwright: "page.set_viewport_size()",
+                        playwrightSyntax: "await page.set_viewport_size({'width': 1920, 'height': 1080})",
+                        description: "Sets viewport dimensions",
+                        notes: ""
+                    }
+                ]
+            },
+            // Assertions & Waiting
+            {
+                category: "Assertions & Waiting",
+                keywords: [
+                    {
+                        browser: "Wait For Elements State",
+                        browserSyntax: "Wait For Elements State    selector    visible    timeout=10s",
+                        playwright: "locator.wait_for()",
+                        playwrightSyntax: "await page.locator('selector').wait_for(state='visible', timeout=10000)",
+                        description: "Waits for element state",
+                        notes: "States: visible, hidden, attached, detached"
+                    },
+                    {
+                        browser: "Wait For Condition",
+                        browserSyntax: "Wait For Condition    Text    selector    ==    expected",
+                        playwright: "expect(locator).to_have_text()",
+                        playwrightSyntax: "from playwright.sync_api import expect\nexpect(page.locator('selector')).to_have_text('expected')",
+                        description: "Waits for condition to be true",
+                        notes: "Use Playwright's expect assertions"
+                    },
+                    {
+                        browser: "Wait For Navigation",
+                        browserSyntax: "Wait For Navigation    url=contains    example.com",
+                        playwright: "page.wait_for_url()",
+                        playwrightSyntax: "await page.wait_for_url('**/example.com/**')\n# or\nawait page.wait_for_url(re.compile(r'example\\.com'))",
+                        description: "Waits for URL change",
+                        notes: "Supports glob and regex patterns"
+                    },
+                    {
+                        browser: "Wait For Load State",
+                        browserSyntax: "Wait For Load State    networkidle    timeout=30s",
+                        playwright: "page.wait_for_load_state()",
+                        playwrightSyntax: "await page.wait_for_load_state('networkidle')\n# States: 'load', 'domcontentloaded', 'networkidle'",
+                        description: "Waits for page load state",
+                        notes: ""
+                    },
+                    {
+                        browser: "Wait For Function",
+                        browserSyntax: "Wait For Function    () => document.ready",
+                        playwright: "page.wait_for_function()",
+                        playwrightSyntax: "await page.wait_for_function('() => document.readyState === \"complete\"')",
+                        description: "Waits for JS function to return truthy",
+                        notes: ""
+                    },
+                    {
+                        browser: "Wait For Request",
+                        browserSyntax: "Wait For Request    url=api/data",
+                        playwright: "page.wait_for_request()",
+                        playwrightSyntax: "request = await page.wait_for_request('**/api/data')",
+                        description: "Waits for network request",
+                        notes: ""
+                    },
+                    {
+                        browser: "Wait For Response",
+                        browserSyntax: "Wait For Response    url=api/data",
+                        playwright: "page.wait_for_response()",
+                        playwrightSyntax: "response = await page.wait_for_response('**/api/data')\ndata = await response.json()",
+                        description: "Waits for network response",
+                        notes: "Can access response body"
+                    },
+                    {
+                        browser: "Wait For Download",
+                        browserSyntax: "${path}=    Wait For Download    /save/path",
+                        playwright: "page.expect_download()",
+                        playwrightSyntax: "async with page.expect_download() as download_info:\n    await page.click('download-btn')\ndownload = await download_info.value\nawait download.save_as('/save/path')",
+                        description: "Waits for file download",
+                        notes: "Use context manager pattern"
+                    },
+                    {
+                        browser: "Get Element States",
+                        browserSyntax: "${states}=    Get Element States    selector",
+                        playwright: "Multiple is_* methods",
+                        playwrightSyntax: "locator = page.locator('selector')\nstates = {\n    'visible': await locator.is_visible(),\n    'enabled': await locator.is_enabled(),\n    'editable': await locator.is_editable(),\n    'checked': await locator.is_checked()\n}",
+                        description: "Gets all element states",
+                        notes: "Combine multiple checks"
+                    }
+                ]
+            },
+            // Assertions with Expect
+            {
+                category: "Playwright Assertions (expect)",
+                keywords: [
+                    {
+                        browser: "Get Text    ==    expected",
+                        browserSyntax: "Get Text    selector    ==    expected text",
+                        playwright: "expect(locator).to_have_text()",
+                        playwrightSyntax: "from playwright.sync_api import expect\nexpect(page.locator('selector')).to_have_text('expected text')",
+                        description: "Asserts element has text",
+                        notes: "Auto-retrying assertion"
+                    },
+                    {
+                        browser: "Get Attribute    ==    expected",
+                        browserSyntax: "Get Attribute    selector    href    ==    /path",
+                        playwright: "expect(locator).to_have_attribute()",
+                        playwrightSyntax: "expect(page.locator('selector')).to_have_attribute('href', '/path')",
+                        description: "Asserts attribute value",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Element States    contains    visible",
+                        browserSyntax: "Get Element States    selector    contains    visible",
+                        playwright: "expect(locator).to_be_visible()",
+                        playwrightSyntax: "expect(page.locator('selector')).to_be_visible()\nexpect(page.locator('selector')).to_be_hidden()\nexpect(page.locator('selector')).to_be_enabled()\nexpect(page.locator('selector')).to_be_disabled()",
+                        description: "Asserts element visibility/state",
+                        notes: "Multiple assertion methods"
+                    },
+                    {
+                        browser: "Get Url    ==    expected",
+                        browserSyntax: "Get Url    ==    https://example.com",
+                        playwright: "expect(page).to_have_url()",
+                        playwrightSyntax: "expect(page).to_have_url('https://example.com')\n# With regex:\nexpect(page).to_have_url(re.compile(r'example'))",
+                        description: "Asserts page URL",
+                        notes: "Supports regex"
+                    },
+                    {
+                        browser: "Get Title    ==    expected",
+                        browserSyntax: "Get Title    ==    Page Title",
+                        playwright: "expect(page).to_have_title()",
+                        playwrightSyntax: "expect(page).to_have_title('Page Title')\nexpect(page).to_have_title(re.compile(r'Title'))",
+                        description: "Asserts page title",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Element Count    ==    5",
+                        browserSyntax: "Get Element Count    selector    ==    5",
+                        playwright: "expect(locator).to_have_count()",
+                        playwrightSyntax: "expect(page.locator('selector')).to_have_count(5)",
+                        description: "Asserts element count",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Checkbox State    ==    True",
+                        browserSyntax: "Get Checkbox State    selector    ==    True",
+                        playwright: "expect(locator).to_be_checked()",
+                        playwrightSyntax: "expect(page.locator('selector')).to_be_checked()\nexpect(page.locator('selector')).not_to_be_checked()",
+                        description: "Asserts checkbox state",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Select Options    contains    value",
+                        browserSyntax: "Get Select Options    selector    contains    value",
+                        playwright: "expect(locator).to_have_value()",
+                        playwrightSyntax: "expect(page.locator('select')).to_have_value('option_value')\n# For multiple:\nexpect(page.locator('select')).to_have_values(['val1', 'val2'])",
+                        description: "Asserts selected value",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Classes    contains    active",
+                        browserSyntax: "Get Classes    selector    contains    active",
+                        playwright: "expect(locator).to_have_class()",
+                        playwrightSyntax: "expect(page.locator('selector')).to_have_class(re.compile(r'active'))",
+                        description: "Asserts element has class",
+                        notes: "Use regex for partial match"
+                    }
+                ]
+            },
+            // Screenshots & Recording
+            {
+                category: "Screenshots & Recording",
+                keywords: [
+                    {
+                        browser: "Take Screenshot",
+                        browserSyntax: "Take Screenshot    filename=screenshot.png    fullPage=True",
+                        playwright: "page.screenshot()",
+                        playwrightSyntax: "await page.screenshot(path='screenshot.png', full_page=True)",
+                        description: "Takes page screenshot",
+                        notes: "full_page captures entire scrollable area"
+                    },
+                    {
+                        browser: "Take Screenshot    selector",
+                        browserSyntax: "Take Screenshot    selector=button    filename=btn.png",
+                        playwright: "locator.screenshot()",
+                        playwrightSyntax: "await page.locator('button').screenshot(path='btn.png')",
+                        description: "Takes element screenshot",
+                        notes: ""
+                    },
+                    {
+                        browser: "Start Video Recording",
+                        browserSyntax: "New Context    recordVideo={'dir': 'videos'}",
+                        playwright: "context with record_video_dir",
+                        playwrightSyntax: "context = await browser.new_context(\n    record_video_dir='videos/',\n    record_video_size={'width': 1280, 'height': 720}\n)",
+                        description: "Records video of session",
+                        notes: "Set during context creation"
+                    },
+                    {
+                        browser: "Get Video Path",
+                        browserSyntax: "${path}=    Get Video Path",
+                        playwright: "page.video.path()",
+                        playwrightSyntax: "path = await page.video.path()",
+                        description: "Gets recorded video path",
+                        notes: "Available after page close"
+                    }
+                ]
+            },
+            // JavaScript Execution
+            {
+                category: "JavaScript Execution",
+                keywords: [
+                    {
+                        browser: "Evaluate JavaScript",
+                        browserSyntax: "${result}=    Evaluate JavaScript    None    () => document.title",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "result = await page.evaluate('() => document.title')\n# or\nresult = await page.evaluate('document.title')",
+                        description: "Executes JavaScript in page context",
+                        notes: ""
+                    },
+                    {
+                        browser: "Evaluate JavaScript    selector",
+                        browserSyntax: "${text}=    Evaluate JavaScript    selector    (elem) => elem.innerText",
+                        playwright: "locator.evaluate()",
+                        playwrightSyntax: "text = await page.locator('selector').evaluate('elem => elem.innerText')",
+                        description: "Executes JS with element",
+                        notes: "Element passed as first argument"
+                    },
+                    {
+                        browser: "Evaluate JavaScript (all elements)",
+                        browserSyntax: "${texts}=    Evaluate JavaScript    selector    (elems) => elems.map(e => e.innerText)    all_elements=True",
+                        playwright: "locator.evaluate_all()",
+                        playwrightSyntax: "texts = await page.locator('selector').evaluate_all('elems => elems.map(e => e.innerText)')",
+                        description: "Executes JS on all matching elements",
+                        notes: ""
+                    },
+                    {
+                        browser: "Execute JavaScript",
+                        browserSyntax: "Execute JavaScript    alert('Hello')",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "await page.evaluate(\"alert('Hello')\")",
+                        description: "Executes JS without return value",
+                        notes: "Same as evaluate"
+                    },
+                    {
+                        browser: "Add Style Tag",
+                        browserSyntax: "Add Style Tag    content=body { background: red; }",
+                        playwright: "page.add_style_tag()",
+                        playwrightSyntax: "await page.add_style_tag(content='body { background: red; }')\n# or from file:\nawait page.add_style_tag(path='styles.css')",
+                        description: "Injects CSS",
+                        notes: ""
+                    },
+                    {
+                        browser: "Add Script Tag",
+                        browserSyntax: "Add Script Tag    content=console.log('loaded')",
+                        playwright: "page.add_script_tag()",
+                        playwrightSyntax: "await page.add_script_tag(content='console.log(\"loaded\")')\n# or from URL:\nawait page.add_script_tag(url='https://cdn.example.com/lib.js')",
+                        description: "Injects JavaScript",
+                        notes: ""
+                    }
+                ]
+            },
+            // Frames & Iframes
+            {
+                category: "Frames & Iframes",
+                keywords: [
+                    {
+                        browser: "Set Selector Prefix",
+                        browserSyntax: "Set Selector Prefix    iframe[name='frame'] >>>",
+                        playwright: "frame_locator()",
+                        playwrightSyntax: "frame = page.frame_locator('iframe[name=\"frame\"]')\nawait frame.locator('button').click()",
+                        description: "Works with iframe content",
+                        notes: "frame_locator returns FrameLocator"
+                    },
+                    {
+                        browser: "Get Frames",
+                        browserSyntax: "${frames}=    Get Frames",
+                        playwright: "page.frames",
+                        playwrightSyntax: "frames = page.frames\nfor frame in frames:\n    print(frame.url)",
+                        description: "Gets all frames",
+                        notes: "Property, not method"
+                    },
+                    {
+                        browser: "Click in Frame",
+                        browserSyntax: "Click    iframe >>> button",
+                        playwright: "frame_locator().locator()",
+                        playwrightSyntax: "await page.frame_locator('iframe').locator('button').click()",
+                        description: "Interacts with elements in frame",
+                        notes: "Chain frame_locator with locator"
+                    },
+                    {
+                        browser: "Nested Frames",
+                        browserSyntax: "Click    iframe >>> iframe >>> button",
+                        playwright: "Nested frame_locator()",
+                        playwrightSyntax: "await page.frame_locator('iframe').frame_locator('iframe').locator('button').click()",
+                        description: "Works with nested frames",
+                        notes: "Chain multiple frame_locators"
+                    }
+                ]
+            },
+            // Dialogs & Popups
+            {
+                category: "Dialogs & Popups",
+                keywords: [
+                    {
+                        browser: "Handle Future Dialogs",
+                        browserSyntax: "Handle Future Dialogs    action=accept",
+                        playwright: "page.on('dialog')",
+                        playwrightSyntax: "page.on('dialog', lambda dialog: dialog.accept())\n# or\npage.on('dialog', lambda dialog: dialog.dismiss())",
+                        description: "Handles alert/confirm/prompt dialogs",
+                        notes: "Set up handler before triggering dialog"
+                    },
+                    {
+                        browser: "Handle Future Dialogs    prompt",
+                        browserSyntax: "Handle Future Dialogs    action=accept    prompt_input=my text",
+                        playwright: "dialog.accept('text')",
+                        playwrightSyntax: "async def handle_dialog(dialog):\n    await dialog.accept('my text')\npage.on('dialog', handle_dialog)",
+                        description: "Handles prompt with input",
+                        notes: ""
+                    },
+                    {
+                        browser: "Wait For Alert",
+                        browserSyntax: "${msg}=    Wait For Alert    action=accept",
+                        playwright: "page.expect_event('dialog')",
+                        playwrightSyntax: "async with page.expect_event('dialog') as dialog_info:\n    await page.click('button')  # triggers dialog\ndialog = await dialog_info.value\nprint(dialog.message)\nawait dialog.accept()",
+                        description: "Waits for dialog",
+                        notes: "Get message before accepting"
+                    },
+                    {
+                        browser: "Get Alert Message",
+                        browserSyntax: "${msg}=    Get Alert Message",
+                        playwright: "dialog.message",
+                        playwrightSyntax: "# In dialog handler:\nmessage = dialog.message",
+                        description: "Gets dialog message",
+                        notes: "Property of dialog object"
+                    }
+                ]
+            },
+            // Cookies & Storage
+            {
+                category: "Cookies & Storage",
+                keywords: [
+                    {
+                        browser: "Get Cookies",
+                        browserSyntax: "${cookies}=    Get Cookies",
+                        playwright: "context.cookies()",
+                        playwrightSyntax: "cookies = await context.cookies()\n# Filter by URL:\ncookies = await context.cookies(['https://example.com'])",
+                        description: "Gets all cookies",
+                        notes: ""
+                    },
+                    {
+                        browser: "Add Cookie",
+                        browserSyntax: "Add Cookie    name=session    value=abc123    url=https://example.com",
+                        playwright: "context.add_cookies()",
+                        playwrightSyntax: "await context.add_cookies([{\n    'name': 'session',\n    'value': 'abc123',\n    'url': 'https://example.com'\n}])",
+                        description: "Adds a cookie",
+                        notes: "Takes list of cookie objects"
+                    },
+                    {
+                        browser: "Delete All Cookies",
+                        browserSyntax: "Delete All Cookies",
+                        playwright: "context.clear_cookies()",
+                        playwrightSyntax: "await context.clear_cookies()",
+                        description: "Deletes all cookies",
+                        notes: ""
+                    },
+                    {
+                        browser: "LocalStorage Get Item",
+                        browserSyntax: "${value}=    LocalStorage Get Item    key",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "value = await page.evaluate('() => localStorage.getItem(\"key\")')",
+                        description: "Gets localStorage item",
+                        notes: "Use evaluate"
+                    },
+                    {
+                        browser: "LocalStorage Set Item",
+                        browserSyntax: "LocalStorage Set Item    key    value",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "await page.evaluate('([key, value]) => localStorage.setItem(key, value)', ['key', 'value'])",
+                        description: "Sets localStorage item",
+                        notes: ""
+                    },
+                    {
+                        browser: "LocalStorage Remove Item",
+                        browserSyntax: "LocalStorage Remove Item    key",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "await page.evaluate('key => localStorage.removeItem(key)', 'key')",
+                        description: "Removes localStorage item",
+                        notes: ""
+                    },
+                    {
+                        browser: "LocalStorage Clear",
+                        browserSyntax: "LocalStorage Clear",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "await page.evaluate('() => localStorage.clear()')",
+                        description: "Clears all localStorage",
+                        notes: ""
+                    },
+                    {
+                        browser: "SessionStorage Get Item",
+                        browserSyntax: "${value}=    SessionStorage Get Item    key",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "value = await page.evaluate('() => sessionStorage.getItem(\"key\")')",
+                        description: "Gets sessionStorage item",
+                        notes: ""
+                    },
+                    {
+                        browser: "Save Storage State",
+                        browserSyntax: "Save Storage State    storage.json",
+                        playwright: "context.storage_state()",
+                        playwrightSyntax: "await context.storage_state(path='storage.json')",
+                        description: "Saves cookies & storage to file",
+                        notes: "Great for auth reuse"
+                    },
+                    {
+                        browser: "Load Storage State",
+                        browserSyntax: "New Context    storageState=storage.json",
+                        playwright: "storage_state parameter",
+                        playwrightSyntax: "context = await browser.new_context(storage_state='storage.json')",
+                        description: "Loads saved storage state",
+                        notes: "Reuse auth across tests"
+                    }
+                ]
+            },
+            // Network Interception
+            {
+                category: "Network & API",
+                keywords: [
+                    {
+                        browser: "Mock Response",
+                        browserSyntax: "Mock Response    url=**/api/data    body={\"mocked\": true}",
+                        playwright: "page.route()",
+                        playwrightSyntax: "await page.route('**/api/data', lambda route: route.fulfill(\n    status=200,\n    content_type='application/json',\n    body='{\"mocked\": true}'\n))",
+                        description: "Mocks network response",
+                        notes: "Powerful for API testing"
+                    },
+                    {
+                        browser: "Enable Request Logging",
+                        browserSyntax: "Enable Request Logging    log_all=True",
+                        playwright: "page.on('request'/'response')",
+                        playwrightSyntax: "page.on('request', lambda req: print(f'>> {req.method} {req.url}'))\npage.on('response', lambda res: print(f'<< {res.status} {res.url}'))",
+                        description: "Logs network activity",
+                        notes: "Use event listeners"
+                    },
+                    {
+                        browser: "Wait For Request",
+                        browserSyntax: "${request}=    Wait For Request    **/api/**",
+                        playwright: "page.wait_for_request()",
+                        playwrightSyntax: "request = await page.wait_for_request('**/api/**')\nprint(request.url, request.method)",
+                        description: "Waits for specific request",
+                        notes: ""
+                    },
+                    {
+                        browser: "Wait For Response",
+                        browserSyntax: "${response}=    Wait For Response    **/api/**",
+                        playwright: "page.wait_for_response()",
+                        playwrightSyntax: "response = await page.wait_for_response('**/api/**')\ndata = await response.json()",
+                        description: "Waits for specific response",
+                        notes: "Can get response body"
+                    },
+                    {
+                        browser: "HTTP    GET    url",
+                        browserSyntax: "${resp}=    HTTP    GET    https://api.example.com/data",
+                        playwright: "api_request_context",
+                        playwrightSyntax: "api = await playwright.request.new_context()\nresponse = await api.get('https://api.example.com/data')\ndata = await response.json()",
+                        description: "Makes HTTP request",
+                        notes: "Use APIRequestContext"
+                    },
+                    {
+                        browser: "HTTP    POST    url    body",
+                        browserSyntax: "${resp}=    HTTP    POST    url    body={'key': 'value'}",
+                        playwright: "api.post()",
+                        playwrightSyntax: "response = await api.post('https://api.example.com/data',\n    data={'key': 'value'})",
+                        description: "Makes POST request",
+                        notes: ""
+                    },
+                    {
+                        browser: "Block Request",
+                        browserSyntax: "Block Request    **/ads/**",
+                        playwright: "page.route() with abort",
+                        playwrightSyntax: "await page.route('**/ads/**', lambda route: route.abort())",
+                        description: "Blocks matching requests",
+                        notes: ""
+                    },
+                    {
+                        browser: "Modify Request",
+                        browserSyntax: "# Complex keyword usage",
+                        playwright: "route.continue_()",
+                        playwrightSyntax: "async def handle_route(route):\n    headers = {**route.request.headers, 'X-Custom': 'value'}\n    await route.continue_(headers=headers)\nawait page.route('**/*', handle_route)",
+                        description: "Modifies request headers/body",
+                        notes: ""
+                    }
+                ]
+            },
+            // Mouse Actions
+            {
+                category: "Mouse Actions",
+                keywords: [
+                    {
+                        browser: "Mouse Move Relative To",
+                        browserSyntax: "Mouse Move Relative To    selector    x=10    y=20",
+                        playwright: "mouse.move()",
+                        playwrightSyntax: "box = await page.locator('selector').bounding_box()\nawait page.mouse.move(box['x'] + 10, box['y'] + 20)",
+                        description: "Moves mouse relative to element",
+                        notes: "Calculate position manually"
+                    },
+                    {
+                        browser: "Mouse Button",
+                        browserSyntax: "Mouse Button    click    x=100    y=200",
+                        playwright: "page.mouse.click()",
+                        playwrightSyntax: "await page.mouse.click(100, 200)\n# or\nawait page.mouse.dblclick(100, 200)",
+                        description: "Clicks at coordinates",
+                        notes: ""
+                    },
+                    {
+                        browser: "Mouse Move",
+                        browserSyntax: "Mouse Move    x=100    y=200",
+                        playwright: "page.mouse.move()",
+                        playwrightSyntax: "await page.mouse.move(100, 200)",
+                        description: "Moves mouse to coordinates",
+                        notes: ""
+                    },
+                    {
+                        browser: "Mouse Down/Up",
+                        browserSyntax: "Mouse Button    down\nMouse Button    up",
+                        playwright: "page.mouse.down()/up()",
+                        playwrightSyntax: "await page.mouse.down()\nawait page.mouse.up()",
+                        description: "Mouse button press/release",
+                        notes: ""
+                    }
+                ]
+            },
+            // Selectors
+            {
+                category: "Selectors",
+                keywords: [
+                    {
+                        browser: "CSS Selector",
+                        browserSyntax: "Click    css=button.submit",
+                        playwright: "CSS selector",
+                        playwrightSyntax: "await page.click('button.submit')\n# Explicit:\nawait page.click('css=button.submit')",
+                        description: "CSS selector",
+                        notes: "CSS is default in Playwright"
+                    },
+                    {
+                        browser: "XPath Selector",
+                        browserSyntax: "Click    xpath=//button[@id='submit']",
+                        playwright: "XPath selector",
+                        playwrightSyntax: "await page.click('xpath=//button[@id=\"submit\"]')\n# or shorthand:\nawait page.click('//button[@id=\"submit\"]')",
+                        description: "XPath selector",
+                        notes: "Use xpath= prefix or //"
+                    },
+                    {
+                        browser: "Text Selector",
+                        browserSyntax: "Click    text=Submit",
+                        playwright: "text selector",
+                        playwrightSyntax: "await page.click('text=Submit')\n# Exact match:\nawait page.click('text=\"Submit\"')",
+                        description: "Text content selector",
+                        notes: "Quotes for exact match"
+                    },
+                    {
+                        browser: "ID Selector",
+                        browserSyntax: "Click    id=submit-btn",
+                        playwright: "CSS #id",
+                        playwrightSyntax: "await page.click('#submit-btn')",
+                        description: "ID selector",
+                        notes: "Use CSS # syntax"
+                    },
+                    {
+                        browser: "Placeholder Selector",
+                        browserSyntax: "Fill Text    [placeholder='Email']    test@test.com",
+                        playwright: "placeholder selector",
+                        playwrightSyntax: "await page.get_by_placeholder('Email').fill('test@test.com')",
+                        description: "Selects by placeholder",
+                        notes: "Use get_by_placeholder"
+                    },
+                    {
+                        browser: "Role Selector",
+                        browserSyntax: "Click    role=button[name='Submit']",
+                        playwright: "get_by_role()",
+                        playwrightSyntax: "await page.get_by_role('button', name='Submit').click()",
+                        description: "ARIA role selector",
+                        notes: "Recommended for accessibility"
+                    },
+                    {
+                        browser: "Label Selector",
+                        browserSyntax: "Fill Text    label=Email    test@test.com",
+                        playwright: "get_by_label()",
+                        playwrightSyntax: "await page.get_by_label('Email').fill('test@test.com')",
+                        description: "Selects input by label",
+                        notes: ""
+                    },
+                    {
+                        browser: "Test ID Selector",
+                        browserSyntax: "Click    [data-testid='submit']",
+                        playwright: "get_by_test_id()",
+                        playwrightSyntax: "await page.get_by_test_id('submit').click()",
+                        description: "Selects by data-testid",
+                        notes: "Configure attribute name if different"
+                    },
+                    {
+                        browser: "Chained Selectors",
+                        browserSyntax: "Click    css=.container >> css=button",
+                        playwright: "locator chaining",
+                        playwrightSyntax: "await page.locator('.container').locator('button').click()\n# or\nawait page.locator('.container >> button').click()",
+                        description: "Chains selectors",
+                        notes: "Use >> or chain locator()"
+                    },
+                    {
+                        browser: "nth Element",
+                        browserSyntax: "Click    css=button >> nth=0",
+                        playwright: "locator.nth()",
+                        playwrightSyntax: "await page.locator('button').nth(0).click()\n# First:\nawait page.locator('button').first.click()\n# Last:\nawait page.locator('button').last.click()",
+                        description: "Selects nth element",
+                        notes: "first, last, nth() available"
+                    },
+                    {
+                        browser: "Has Text Filter",
+                        browserSyntax: "Click    button >> text=Submit",
+                        playwright: "filter(has_text=)",
+                        playwrightSyntax: "await page.locator('button').filter(has_text='Submit').click()",
+                        description: "Filters by text content",
+                        notes: "filter() for complex queries"
+                    },
+                    {
+                        browser: "Has Selector Filter",
+                        browserSyntax: "Click    div:has(button)",
+                        playwright: "filter(has=)",
+                        playwrightSyntax: "await page.locator('div').filter(has=page.locator('button')).click()",
+                        description: "Filters by child element",
+                        notes: ""
+                    }
+                ]
+            },
+            // Timeouts & Configuration
+            {
+                category: "Timeouts & Configuration",
+                keywords: [
+                    {
+                        browser: "Set Browser Timeout",
+                        browserSyntax: "Set Browser Timeout    30s",
+                        playwright: "timeout parameter",
+                        playwrightSyntax: "# Per action:\nawait page.click('button', timeout=30000)\n\n# Default for page:\npage.set_default_timeout(30000)\n\n# Navigation timeout:\npage.set_default_navigation_timeout(30000)",
+                        description: "Sets timeout duration",
+                        notes: "In milliseconds for Playwright"
+                    },
+                    {
+                        browser: "Set Retry Assertions For",
+                        browserSyntax: "Set Retry Assertions For    10s",
+                        playwright: "expect timeout",
+                        playwrightSyntax: "from playwright.sync_api import expect\nexpect.set_options(timeout=10000)",
+                        description: "Sets assertion retry timeout",
+                        notes: ""
+                    },
+                    {
+                        browser: "Set Strict Mode",
+                        browserSyntax: "Set Strict Mode    True",
+                        playwright: "Strict by default",
+                        playwrightSyntax: "# Playwright locators are strict by default\n# For multiple elements, use:\nawait page.locator('button').first.click()\nawait page.locator('button').nth(0).click()",
+                        description: "Fails if selector matches multiple",
+                        notes: "Playwright is strict by default"
+                    },
+                    {
+                        browser: "Set Geolocation",
+                        browserSyntax: "Set Geolocation    latitude=51.5    longitude=-0.12",
+                        playwright: "context geolocation",
+                        playwrightSyntax: "context = await browser.new_context(\n    geolocation={'latitude': 51.5, 'longitude': -0.12},\n    permissions=['geolocation']\n)",
+                        description: "Sets geolocation",
+                        notes: "Set in context options"
+                    },
+                    {
+                        browser: "Set Offline Mode",
+                        browserSyntax: "Set Offline    True",
+                        playwright: "context.set_offline()",
+                        playwrightSyntax: "await context.set_offline(True)",
+                        description: "Enables offline mode",
+                        notes: ""
+                    },
+                    {
+                        browser: "Emulate Media",
+                        browserSyntax: "Emulate Media    colorScheme=dark",
+                        playwright: "page.emulate_media()",
+                        playwrightSyntax: "await page.emulate_media(color_scheme='dark')\nawait page.emulate_media(media='print')",
+                        description: "Emulates media features",
+                        notes: ""
+                    },
+                    {
+                        browser: "Set User Agent",
+                        browserSyntax: "New Context    userAgent=custom-agent",
+                        playwright: "context user_agent",
+                        playwrightSyntax: "context = await browser.new_context(\n    user_agent='Mozilla/5.0 Custom Agent'\n)",
+                        description: "Sets user agent string",
+                        notes: "Set in context options"
+                    }
+                ]
+            },
+            // Tracing & Debugging
+            {
+                category: "Tracing & Debugging",
+                keywords: [
+                    {
+                        browser: "Enable Tracing",
+                        browserSyntax: "New Context    tracing={'screenshots': True, 'snapshots': True}",
+                        playwright: "context.tracing.start()",
+                        playwrightSyntax: "await context.tracing.start(\n    screenshots=True,\n    snapshots=True,\n    sources=True\n)",
+                        description: "Starts trace recording",
+                        notes: ""
+                    },
+                    {
+                        browser: "Get Tracing",
+                        browserSyntax: "${trace}=    Get Tracing    traceFile=trace.zip",
+                        playwright: "context.tracing.stop()",
+                        playwrightSyntax: "await context.tracing.stop(path='trace.zip')\n# View with:\n# npx playwright show-trace trace.zip",
+                        description: "Stops and saves trace",
+                        notes: "View with Playwright trace viewer"
+                    },
+                    {
+                        browser: "Console Log",
+                        browserSyntax: "# Set up logging listener",
+                        playwright: "page.on('console')",
+                        playwrightSyntax: "page.on('console', lambda msg: print(f'Console: {msg.text}'))",
+                        description: "Captures console messages",
+                        notes: ""
+                    },
+                    {
+                        browser: "Page Error",
+                        browserSyntax: "# Set up error listener",
+                        playwright: "page.on('pageerror')",
+                        playwrightSyntax: "page.on('pageerror', lambda exc: print(f'Error: {exc}'))",
+                        description: "Captures page errors",
+                        notes: ""
+                    },
+                    {
+                        browser: "Pause Execution",
+                        browserSyntax: "# Debug in RF",
+                        playwright: "page.pause()",
+                        playwrightSyntax: "await page.pause()  # Opens Playwright Inspector",
+                        description: "Pauses for debugging",
+                        notes: "Opens Inspector in headed mode"
+                    }
+                ]
+            },
+            // PDF & Printing
+            {
+                category: "PDF & Printing",
+                keywords: [
+                    {
+                        browser: "Save Page As PDF",
+                        browserSyntax: "Save Page As PDF    output.pdf",
+                        playwright: "page.pdf()",
+                        playwrightSyntax: "await page.pdf(path='output.pdf')\n# With options:\nawait page.pdf(\n    path='output.pdf',\n    format='A4',\n    print_background=True\n)",
+                        description: "Saves page as PDF",
+                        notes: "Only works in Chromium"
+                    }
+                ]
+            }
+        ,
+            // Context Management (MISSING KEYWORDS ADDED)
+            {
+                category: "Context Management",
+                keywords: [
+                    {
+                        browser: "New Context",
+                        browserSyntax: "New Context    viewport={'width': 1920, 'height': 1080}    acceptDownloads=True",
+                        playwright: "browser.new_context()",
+                        playwrightSyntax: "context = await browser.new_context(viewport={'width': 1920, 'height': 1080}, accept_downloads=True)",
+                        description: "Creates a new isolated browser context",
+                        notes: "Context is like an incognito session - isolated cookies, storage, etc."
+                    },
+                    {
+                        browser: "New Persistent Context",
+                        browserSyntax: "New Persistent Context    user_data_dir=/path/to/profile    headless=False",
+                        playwright: "browser.new_persistent_context()",
+                        playwrightSyntax: "context = await browser.new_persistent_context(user_data_dir='/path/to/profile', headless=False)",
+                        description: "Creates a persistent browser context with saved session data",
+                        notes: "Persists cookies, localStorage, sessionStorage to disk. Useful for authenticated sessions."
+                    },
+                    {
+                        browser: "Close Context",
+                        browserSyntax: "Close Context    ALL",
+                        playwright: "context.close()",
+                        playwrightSyntax: "await context.close()",
+                        description: "Closes the browser context",
+                        notes: "Closes all pages within the context"
+                    },
+                    {
+                        browser: "Switch Context",
+                        browserSyntax: "Switch Context    context_id=context1",
+                        playwright: "# Manual context reference",
+                        playwrightSyntax: "# Store contexts in variables and switch between them",
+                        description: "Switches to a different browser context",
+                        notes: "Browser Library manages context switching automatically"
+                    },
+                    {
+                        browser: "Grant Permissions",
+                        browserSyntax: "Grant Permissions    geolocation    notifications    camera",
+                        playwright: "context.grant_permissions()",
+                        playwrightSyntax: "await context.grant_permissions(['geolocation', 'notifications', 'camera'])",
+                        description: "Grants specific browser permissions to the context",
+                        notes: "Common permissions: geolocation, notifications, camera, microphone, clipboard-read"
+                    },
+                    {
+                        browser: "Get Browser Catalog",
+                        browserSyntax: "${catalog}=    Get Browser Catalog",
+                        playwright: "# Manual tracking",
+                        playwrightSyntax: "# Keep track of browser/context objects manually",
+                        description: "Returns a catalog of all open browsers, contexts, and pages",
+                        notes: "Useful for debugging and understanding current browser state"
+                    },
+                    {
+                        browser: "Set Browser Timeout",
+                        browserSyntax: "Set Browser Timeout    30s",
+                        playwright: "context.set_default_timeout()",
+                        playwrightSyntax: "context.set_default_timeout(30000)  # milliseconds",
+                        description: "Sets the default timeout for all operations",
+                        notes: "Browser Library uses seconds, Playwright uses milliseconds"
+                    }
+                ]
+            },
+            // Storage & Cookies (MISSING KEYWORDS ADDED)
+            {
+                category: "Storage & Cookies",
+                keywords: [
+                    {
+                        browser: "Get Local Storage",
+                        browserSyntax: "${value}=    Get Local Storage    key=username",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "value = await page.evaluate('() => localStorage.getItem(\"username\")')",
+                        description: "Gets a value from local storage",
+                        notes: "Returns None if key doesn't exist"
+                    },
+                    {
+                        browser: "Set Local Storage",
+                        browserSyntax: "Set Local Storage    key=token    value=abc123",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "await page.evaluate('() => localStorage.setItem(\"token\", \"abc123\")')",
+                        description: "Sets a value in local storage",
+                        notes: "Must be on a page before setting local storage"
+                    },
+                    {
+                        browser: "Get Session Storage",
+                        browserSyntax: "${value}=    Get Session Storage    key=sessionId",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "value = await page.evaluate('() => sessionStorage.getItem(\"sessionId\")')",
+                        description: "Gets a value from session storage",
+                        notes: "Session storage is cleared when page session ends"
+                    },
+                    {
+                        browser: "Set Session Storage",
+                        browserSyntax: "Set Session Storage    key=temp    value=data",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "await page.evaluate('() => sessionStorage.setItem(\"temp\", \"data\")')",
+                        description: "Sets a value in session storage",
+                        notes: "Session storage is per-tab/page"
+                    },
+                    {
+                        browser: "Get Cookies",
+                        browserSyntax: "${cookies}=    Get Cookies",
+                        playwright: "context.cookies()",
+                        playwrightSyntax: "cookies = await context.cookies()",
+                        description: "Returns all cookies for current context",
+                        notes: "Returns a list of cookie dictionaries"
+                    },
+                    {
+                        browser: "Add Cookie",
+                        browserSyntax: "Add Cookie    name=session    value=xyz    domain=.example.com",
+                        playwright: "context.add_cookies()",
+                        playwrightSyntax: "await context.add_cookies([{'name': 'session', 'value': 'xyz', 'domain': '.example.com', 'path': '/'}])",
+                        description: "Adds a cookie to the browser context",
+                        notes: "Cookie must have name, value, domain, and path"
+                    },
+                    {
+                        browser: "Delete All Cookies",
+                        browserSyntax: "Delete All Cookies",
+                        playwright: "context.clear_cookies()",
+                        playwrightSyntax: "await context.clear_cookies()",
+                        description: "Deletes all cookies from the context",
+                        notes: "Affects all pages in the context"
+                    }
+                ]
+            },
+            // Network & Request Handling (MISSING KEYWORDS ADDED)
+            {
+                category: "Network & Request Handling",
+                keywords: [
+                    {
+                        browser: "Wait For Request",
+                        browserSyntax: "${request}=    Wait For Request    url_matcher=**/api/users    timeout=10s",
+                        playwright: "page.wait_for_request()",
+                        playwrightSyntax: "async with page.expect_request('**/api/users', timeout=10000) as request_info:\n    await page.click('#submit')\nrequest = await request_info.value",
+                        description: "Waits for a network request matching the pattern",
+                        notes: "Supports glob patterns and regex. Returns request object."
+                    },
+                    {
+                        browser: "Wait For Response",
+                        browserSyntax: "${response}=    Wait For Response    url_matcher=**/api/data    timeout=10s",
+                        playwright: "page.wait_for_response()",
+                        playwrightSyntax: "async with page.expect_response('**/api/data', timeout=10000) as response_info:\n    await page.click('#load')\nresponse = await response_info.value",
+                        description: "Waits for a network response matching the pattern",
+                        notes: "Can check response status, headers, body. Returns response object."
+                    },
+                    {
+                        browser: "HTTP",
+                        browserSyntax: "${response}=    HTTP    url=https://api.example.com/data    method=GET",
+                        playwright: "page.request.get()",
+                        playwrightSyntax: "response = await page.request.get('https://api.example.com/data')",
+                        description: "Makes an HTTP request using the browser context",
+                        notes: "Shares cookies and auth with browser. Supports GET, POST, PUT, DELETE, PATCH"
+                    },
+                    {
+                        browser: "Wait For Download",
+                        browserSyntax: "${download}=    Wait For Download    button_to_click=//button[@id='download']",
+                        playwright: "page.expect_download()",
+                        playwrightSyntax: "async with page.expect_download() as download_info:\n    await page.click('//button[@id=\"download\"]')\ndownload = await download_info.value\nawait download.save_as('/path/to/save')",
+                        description: "Waits for a download to start",
+                        notes: "Must enable acceptDownloads in context. Returns download object."
+                    }
+                ]
+            },
+            // Device & Geolocation (MISSING KEYWORDS ADDED)
+            {
+                category: "Device & Geolocation",
+                keywords: [
+                    {
+                        browser: "Set Geolocation",
+                        browserSyntax: "Set Geolocation    latitude=51.5074    longitude=-0.1278",
+                        playwright: "context.set_geolocation()",
+                        playwrightSyntax: "await context.set_geolocation({'latitude': 51.5074, 'longitude': -0.1278})",
+                        description: "Sets the geolocation for the context",
+                        notes: "Requires 'geolocation' permission. Use Grant Permissions first."
+                    },
+                    {
+                        browser: "Set Offline",
+                        browserSyntax: "Set Offline    offline=True",
+                        playwright: "context.set_offline()",
+                        playwrightSyntax: "await context.set_offline(True)",
+                        description: "Simulates offline/online mode",
+                        notes: "Useful for testing offline behavior and PWAs"
+                    }
+                ]
+            },
+            // Dialog Handling (MISSING KEYWORDS ADDED)
+            {
+                category: "Dialog Handling",
+                keywords: [
+                    {
+                        browser: "Handle Future Dialogs",
+                        browserSyntax: "Handle Future Dialogs    action=accept    prompt_input=test",
+                        playwright: "page.on('dialog')",
+                        playwrightSyntax: "page.on('dialog', lambda dialog: dialog.accept('test'))",
+                        description: "Sets up handler for upcoming alert/confirm/prompt dialogs",
+                        notes: "Actions: accept, dismiss. Must be set before dialog appears."
+                    },
+                    {
+                        browser: "Get Alert Text",
+                        browserSyntax: "${text}=    Get Alert Text",
+                        playwright: "dialog.message",
+                        playwrightSyntax: "# In dialog handler: text = dialog.message",
+                        description: "Gets the text from an alert, confirm, or prompt dialog",
+                        notes: "Must use Handle Future Dialogs to capture dialog"
+                    }
+                ]
+            },
+            // Advanced Element Interaction (MISSING KEYWORDS ADDED)
+            {
+                category: "Advanced Element Interaction",
+                keywords: [
+                    {
+                        browser: "Hover",
+                        browserSyntax: "Hover    selector=//button[@id='menu']",
+                        playwright: "locator.hover()",
+                        playwrightSyntax: "await page.locator('//button[@id=\"menu\"]').hover()",
+                        description: "Hovers mouse over an element",
+                        notes: "Triggers mouseover/mouseenter events. Useful for dropdown menus."
+                    },
+                    {
+                        browser: "Get Element States",
+                        browserSyntax: "${states}=    Get Element States    selector=//input[@id='username']",
+                        playwright: "# Multiple checks",
+                        playwrightSyntax: "element = page.locator('//input[@id=\"username\"]')\nstates = {\n    'visible': await element.is_visible(),\n    'enabled': await element.is_enabled(),\n    'editable': await element.is_editable()\n}",
+                        description: "Returns all states of an element (visible, enabled, editable, etc.)",
+                        notes: "Returns list of active states"
+                    },
+                    {
+                        browser: "Get Style",
+                        browserSyntax: "${color}=    Get Style    selector=//div[@id='banner']    property=background-color",
+                        playwright: "page.evaluate()",
+                        playwrightSyntax: "color = await page.eval_on_selector('//div[@id=\"banner\"]', 'el => getComputedStyle(el).backgroundColor')",
+                        description: "Gets computed CSS style property of an element",
+                        notes: "Returns computed style, not inline style"
+                    },
+                    {
+                        browser: "Drag And Drop",
+                        browserSyntax: "Drag And Drop    selector=//div[@id='drag']    target=//div[@id='drop']",
+                        playwright: "locator.drag_to()",
+                        playwrightSyntax: "await page.locator('//div[@id=\"drag\"]').drag_to(page.locator('//div[@id=\"drop\"]'))",
+                        description: "Drags an element and drops it on target",
+                        notes: "Simulates drag and drop interaction"
+                    },
+                    {
+                        browser: "Scroll To Element",
+                        browserSyntax: "Scroll To Element    selector=//footer",
+                        playwright: "locator.scroll_into_view_if_needed()",
+                        playwrightSyntax: "await page.locator('//footer').scroll_into_view_if_needed()",
+                        description: "Scrolls element into view",
+                        notes: "Playwright auto-scrolls before actions, but this is explicit"
+                    }
+                ]
+            },
+            // Retry & Assertions (MISSING KEYWORDS ADDED)
+            {
+                category: "Assertions & Retry",
+                keywords: [
+                    {
+                        browser: "Set Retry Assertions For",
+                        browserSyntax: "Set Retry Assertions For    timeout=10s",
+                        playwright: "expect.set_options()",
+                        playwrightSyntax: "from playwright.sync_api import expect\nexpect.set_options(timeout=10000)",
+                        description: "Sets retry timeout for assertions",
+                        notes: "Assertions will retry until timeout. Default is 5s."
+                    },
+                    {
+                        browser: "Get Element Count",
+                        browserSyntax: "${count}=    Get Element Count    selector=//div[@class='item']",
+                        playwright: "locator.count()",
+                        playwrightSyntax: "count = await page.locator('//div[@class=\"item\"]').count()",
+                        description: "Returns the number of elements matching selector",
+                        notes: "Returns 0 if no elements found"
+                    }
+                ]
+            },
+];
+
+        // Initialize the page
+        function init() {
+            renderCategoryFilters();
+            renderKeywords();
+            updateStats();
+            setupEventListeners();
+        }
+
+        function renderCategoryFilters() {
+            const container = document.getElementById('categoryFilters');
+            const categories = keywordsData.map(c => c.category);
+            
+            categories.forEach(category => {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn px-3 py-1.5 rounded-full bg-gray-700 hover:bg-blue-600 transition text-sm';
+                btn.dataset.category = category;
+                btn.textContent = category;
+                container.appendChild(btn);
+            });
+        }
+
+        function renderKeywords(searchTerm = '', activeCategory = 'all') {
+            const container = document.getElementById('keywordsContainer');
+            container.innerHTML = '';
+
+            keywordsData.forEach(categoryData => {
+                if (activeCategory !== 'all' && categoryData.category !== activeCategory) return;
+
+                const filteredKeywords = categoryData.keywords.filter(kw => {
+                    if (!searchTerm) return true;
+                    const search = searchTerm.toLowerCase();
+                    return kw.browser.toLowerCase().includes(search) ||
+                           kw.playwright.toLowerCase().includes(search) ||
+                           kw.description.toLowerCase().includes(search);
+                });
+
+                if (filteredKeywords.length === 0) return;
+
+                const section = document.createElement('div');
+                section.className = 'bg-gray-800 rounded-xl overflow-hidden shadow-lg';
+                section.innerHTML = `
+                    <div class="category-header bg-gradient-to-r from-blue-700 to-purple-700 px-6 py-4 cursor-pointer flex justify-between items-center" onclick="toggleCategory(this)">
+                        <h2 class="text-xl font-bold">${categoryData.category}</h2>
+                        <div class="flex items-center gap-3">
+                            <span class="bg-white/20 px-3 py-1 rounded-full text-sm">${filteredKeywords.length} keywords</span>
+                            <svg class="w-6 h-6 transform transition-transform arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="category-content">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-700">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold w-1/5">Browser Library</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold w-1/4">RF Syntax</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold w-1/6">Playwright</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold w-1/4">Python Syntax</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-700">
+                                    ${filteredKeywords.map(kw => `
+                                        <tr class="hover:bg-gray-750 keyword-row">
+                                            <td class="px-4 py-3">
+                                                <code class="code-block text-yellow-400 text-sm">${highlightText(kw.browser, searchTerm)}</code>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <pre class="code-block text-green-400 text-xs bg-gray-900 p-2 rounded overflow-x-auto">${highlightText(escapeHtml(kw.browserSyntax), searchTerm)}</pre>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <code class="code-block text-blue-400 text-sm">${highlightText(kw.playwright, searchTerm)}</code>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <pre class="code-block text-purple-400 text-xs bg-gray-900 p-2 rounded overflow-x-auto">${highlightText(escapeHtml(kw.playwrightSyntax), searchTerm)}</pre>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-gray-400">${kw.notes || kw.description}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+
+            updateStats(searchTerm, activeCategory);
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, '&amp;')
+                       .replace(/</g, '&lt;')
+                       .replace(/>/g, '&gt;')
+                       .replace(/"/g, '&quot;')
+                       .replace(/'/g, '&#039;');
+        }
+
+        function highlightText(text, searchTerm) {
+            if (!searchTerm) return text;
+            const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+            return text.replace(regex, '<span class="highlight text-gray-900">$1</span>');
+        }
+
+        function escapeRegex(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function toggleCategory(header) {
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('.arrow');
+            content.classList.toggle('hidden');
+            arrow.classList.toggle('rotate-180');
+        }
+
+        function expandAll() {
+            document.querySelectorAll('.category-content').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('.arrow').forEach(el => el.classList.add('rotate-180'));
+        }
+
+        function collapseAll() {
+            document.querySelectorAll('.category-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.arrow').forEach(el => el.classList.remove('rotate-180'));
+        }
+
+        function updateStats(searchTerm = '', activeCategory = 'all') {
+            const totalKeywords = keywordsData.reduce((sum, c) => sum + c.keywords.length, 0);
+            const totalCategories = keywordsData.length;
+            
+            let visibleKeywords = 0;
+            keywordsData.forEach(categoryData => {
+                if (activeCategory !== 'all' && categoryData.category !== activeCategory) return;
+                categoryData.keywords.forEach(kw => {
+                    if (!searchTerm) {
+                        visibleKeywords++;
+                    } else {
+                        const search = searchTerm.toLowerCase();
+                        if (kw.browser.toLowerCase().includes(search) ||
+                            kw.playwright.toLowerCase().includes(search) ||
+                            kw.description.toLowerCase().includes(search)) {
+                            visibleKeywords++;
+                        }
+                    }
+                });
+            });
+
+            document.getElementById('totalKeywords').textContent = totalKeywords;
+            document.getElementById('totalCategories').textContent = totalCategories;
+            document.getElementById('visibleKeywords').textContent = visibleKeywords;
+            document.getElementById('matchPercentage').textContent = Math.round((visibleKeywords / totalKeywords) * 100) + '%';
+        }
+
+        function setupEventListeners() {
+            // Search
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const activeCategory = document.querySelector('.category-btn.active').dataset.category;
+                renderKeywords(e.target.value, activeCategory);
+            });
+
+            // Category filters
+            document.getElementById('categoryFilters').addEventListener('click', (e) => {
+                if (e.target.classList.contains('category-btn')) {
+                    document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    const searchTerm = document.getElementById('searchInput').value;
+                    renderKeywords(searchTerm, e.target.dataset.category);
+                }
+            });
+
+            // Back to top button
+            window.addEventListener('scroll', () => {
+                const btn = document.getElementById('backToTop');
+                if (window.scrollY > 500) {
+                    btn.classList.remove('hidden');
+                } else {
+                    btn.classList.add('hidden');
+                }
+            });
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
